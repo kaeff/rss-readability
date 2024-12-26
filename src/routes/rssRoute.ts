@@ -22,7 +22,7 @@ export function setReadabilityRoutes(app: express.Application) {
         }
     });
 
-    app.get('/fulltext', async (req: express.Request, res: express.Response) => {
+    app.get('/feed', async (req: express.Request, res: express.Response) => {
         const url = req.query.url as string;
 
         if (!url) {
