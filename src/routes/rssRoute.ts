@@ -24,6 +24,7 @@ export function setReadabilityRoutes(app: express.Application) {
 
     app.get('/feed', async (req: express.Request, res: express.Response) => {
         const url = req.query.url as string;
+        const limit = parseInt(req.query.limit as string) || Infinity;
 
         if (!url) {
             res.status(400).send('URL is required');
@@ -31,7 +32,7 @@ export function setReadabilityRoutes(app: express.Application) {
         }
 
         try {
-            const rssFeed = await rssService.fetchAndProcessFeed(url);
+            const rssFeed = await rssService.fetchAndProcessFeed(url, limit);
             res.set('Content-Type', 'application/rss+xml');
             res.send(rssFeed);
         } catch (error) {

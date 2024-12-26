@@ -2,8 +2,6 @@ import axios from 'axios';
 import { parseStringPromise } from 'xml2js';
 import { ReadabilityService } from './readabilityService';
 import { FeedItem, RssFeed } from '../types';
-import fs from 'fs';
-import path from 'path';
 
 export class RssService {
     private readabilityService: ReadabilityService;
@@ -12,10 +10,10 @@ export class RssService {
         this.readabilityService = readabilityService;
     }
 
-    async fetchAndProcessFeed(url: string): Promise<String> {
+    async fetchAndProcessFeed(url: string, limit: number): Promise<String> {
         const response = await axios.get(url);
         const rssFeed: RssFeed = await this.parseString(response.data);
-        await this.replaceItemsWithFullText(rssFeed);
+        await this.replaceItemsWithFullText(rssFeed, limit);
         return this.feedToXml(rssFeed);;
     }
 
@@ -25,9 +23,9 @@ export class RssService {
         return xml;
     }
 
-    private async replaceItemsWithFullText(rssFeed: RssFeed) {
+    private async replaceItemsWithFullText(rssFeed: RssFeed, limit: number) {
         const items: FeedItem[] = await Promise.all(
-            rssFeed.items.map(async (item) => {
+            rssFeed.items.slice(0, limit).map(async (item) => {
                 try {
                     const content = await this.readabilityService.extractContent(item.link);
                     return { ...item, description: content };
