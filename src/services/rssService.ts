@@ -2,6 +2,7 @@ import axios from 'axios';
 import { parseStringPromise } from 'xml2js';
 import { ReadabilityService } from './readabilityService';
 import { FeedItem, RssFeed } from '../types';
+import { Builder } from 'xml2js';
 
 export class RssService {
     private readabilityService: ReadabilityService;
@@ -10,16 +11,31 @@ export class RssService {
         this.readabilityService = readabilityService;
     }
 
-    async fetchAndProcessFeed(url: string, limit: number): Promise<String> {
+    async fetchAndProcessFeed(url: string, limit: number): Promise<string> {
         const response = await axios.get(url);
         const rssFeed: RssFeed = await this.parseString(response.data);
         await this.replaceItemsWithFullText(rssFeed, limit);
-        return this.feedToXml(rssFeed);;
+        return this.feedToXml(rssFeed);
     }
 
-    private feedToXml(rssFeed: RssFeed) {
-        const builder = new (require('xml2js')).Builder();
-        const xml = builder.buildObject({ rss: { channel: rssFeed } });
+    private feedToXml(rssFeed: RssFeed): string {
+        const builder = new Builder();
+        const xml = builder.buildObject({
+            rss: {
+                $: { version: '2.0' },
+                channel: {
+                    title: rssFeed.title,
+                    description: rssFeed.description,
+                    link: rssFeed.link,
+                    item: rssFeed.items.map(item => ({
+                        title: item.title,
+                        link: item.link,
+                        description: item.description,
+                        pubDate: item.pubDate
+                    }))
+                }
+            }
+        });
         return xml;
     }
 
